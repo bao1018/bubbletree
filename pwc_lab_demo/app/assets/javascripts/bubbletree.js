@@ -420,6 +420,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
 	 * each view is defined by the selected node (which is displayed
 	 */
 	me.changeView = function(token) {
+		
 		var me = this,
 			paper = me.paper,
 			maxRad = Math.min(me.width, me.height) * 0.35,
@@ -436,7 +437,25 @@ var BubbleTree = function(config, onHover, onUnHover) {
 			bubble, tr, i, twopi = Math.PI * 2,
 			getBubble = me.getBubble.bind(me), getRing = me.getRing.bind(me),
 			unify = me.unifyAngle;
-
+			
+            if(root != node) {
+            	var max = 5;
+            var sons = [];
+            for(var i=0; i< 5; i++){
+            	var son = {
+            		label : "DummyData-" + i,
+            		shortLabel : "DummyData-" + i,
+            		amount: (i+1)*10000
+            	}
+            	   sons.push(son);
+            }
+            node['children'] = sons;
+            me.initData(root);
+            
+            me.initBubbles();
+            }
+            
+            console.log(node);
 		if (node !== null) {
 
 			// what do you we have to do here?
@@ -527,12 +546,25 @@ var BubbleTree = function(config, onHover, onUnHover) {
 				//
 				var hw = me.width * 0.5;
 
-				rad2 = 0 - Math.max(
-					//hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
-					hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85, node.right.amount * 0.85))),
-					tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
-				) + hw;
-
+				// rad2 = 0 - Math.max(
+					// //hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
+					// hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85, node.right.amount * 0.85))),
+					// tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
+				// ) + hw;
+               if (node.right==undefined) {
+                    rad2 = 0 - Math.max(
+                        //hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
+                        hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85))),
+                        tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
+                    ) + hw;
+                }
+                else {
+                    rad2 = 0 - Math.max(
+                        //hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
+                        hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85, node.right.amount * 0.85))),
+                        tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
+                    ) + hw;
+                }
 				//vis4.log('rad (parent) = '+rad2,'   rad (center) = ',rad1);
 
 				if (node.left && node.right) {
