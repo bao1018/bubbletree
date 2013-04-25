@@ -437,7 +437,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
 			bubble, tr, i, twopi = Math.PI * 2,
 			getBubble = me.getBubble.bind(me), getRing = me.getRing.bind(me),
 			unify = me.unifyAngle;
-			
+			/*jeremy*/
             if(root != node) {
             	var max = 5;
             var sons = [];
@@ -454,6 +454,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
             
             me.initBubbles();
             }
+            /*jeremy*/
             
             console.log(node);
 		if (node !== null) {
