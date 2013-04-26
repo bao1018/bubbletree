@@ -107,7 +107,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
 		me.traverse(root, 0);
 		me.treeRoot = root;
 	};
-
+    //remove the children if the children number exceed the max node
 	me.preprocessData = function(root) {
 		var me = this, maxNodes = me.config.maxNodesPerLevel;
 		if (maxNodes) {
@@ -438,21 +438,16 @@ var BubbleTree = function(config, onHover, onUnHover) {
 			getBubble = me.getBubble.bind(me), getRing = me.getRing.bind(me),
 			unify = me.unifyAngle;
 			/*jeremy*/
-            if(root != node) {
-            	var max = 5;
-            var sons = [];
-            for(var i=0; i< 5; i++){
-            	var son = {
-            		label : "DummyData-" + i,
-            		shortLabel : "DummyData-" + i,
-            		amount: (i+1)*10000
-            	}
-            	   sons.push(son);
-            }
-            node['children'] = sons;
+            if(root != node && config.dataProvider && node.children && node.children.length ==0) {
+   
+            //dynamiclly update the children
+            node['children'] = config.dataProvider();
+            //re-calculate node data
             me.initData(root);
-            
-            me.initBubbles();
+            //re-traverse
+            var currBubble = me.getBubble(node);   
+            me.traverseBubbles(currBubble);
+            // me.initTween();
             }
             /*jeremy*/
             
