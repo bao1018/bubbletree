@@ -54,62 +54,59 @@
 	// });
 	//
 	// });
-
-	var data = {
-		label : "I am a node",
-		amount : 1000000
-	}
-
-	function generateChildren(node) {
-		var numChildren = 8;
-		node.children = [];
-		var amount = node.amount;
-		for (var i = 0; i < numChildren; i++) {
-			var child = {
-				label : 'Child #' + (i + 1),
-				amount : i + 1 < numChildren ? amount * Math.random() * .6 : amount
-			};
-			amount -= child.amount;
-			node.children.push(child);
-		}
-	}
-
-	generateChildren(data);
-	
-	var dataVendor = function() {
-		var max = 5;
+	var dataVendor = function(node) {
+		var max = 10;
 		var sons = [];
-		for (var i = 0; i < 5; i++) {
-			var num = parseInt(Math.random()*100);
-			var son = {
-				label : "DummyData-" + num,
-				shortLabel : "DummyData-" + num,
-				amount : (num + 1) * 10000
-			}
-			sons.push(son);
-		}
-		return sons;
+		var ret = [];
+		var param = 'amount='+node.amount;
+		var xhReq = new XMLHttpRequest();
+		
+        xhReq.open("GET", "/home/getChildren?"+param, false);
+        xhReq.setRequestHeader("Content-type", "application/json; charset=utf-8");
+
+        xhReq.send(null);
+        console.log("Load data from server...");
+        ret = JSON.parse(xhReq.responseText);
+
+		return ret;
 	}
+	var data = {
+		label : "Root",
+		amount : 5000000
+	}
+	data["children"] = dataVendor(data);
 	
+	// function generateChildren(node) {
+	// var numChildren = 8;
+	// node.children = [];
+	// var amount = node.amount;
+	// for (var i = 0; i < numChildren; i++) {
+	// var child = {
+	// label : 'Child #' + (i + 1),
+	// amount : i + 1 < numChildren ? amount * Math.random() * .6 : amount
+	// };
+	// amount -= child.amount;
+	// node.children.push(child);
+	// }
+	// }
+	//
+	// generateChildren(data);
+
 	$(function() {
-		new BubbleTree({
+		tree = new BubbleTree({
 			data : data,
 			container : '.bubbletree',
-			dataProvider: dataVendor
+			dataProvider : dataVendor
 		});
-
+		// setTimeout(tree.onResize, 1000);
 	}); 
 </script>
+
 </head>
 <body>
-	<div id="header">
-		<a class="title">OpenSpending</a>
-		<div class="subtitle">
-			UK Country Regional Analysis
-		</div>
-	</div>
+
 	<div class="bubbletree-wrapper">
-		<div class="bubbletree"></div>
+		<div class="bubbletree" style="width:1204px;height:800px"></div>
 	</div>
 </body>
 </html>

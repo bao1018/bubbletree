@@ -439,9 +439,8 @@ var BubbleTree = function(config, onHover, onUnHover) {
 			unify = me.unifyAngle;
 			/*jeremy*/
             if(root != node && config.dataProvider && node.children && node.children.length ==0) {
-   
             //dynamiclly update the children
-            node['children'] = config.dataProvider();
+            node['children'] = config.dataProvider(node);
             //re-calculate node data
             me.initData(root);
             //re-traverse
