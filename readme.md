@@ -1,6 +1,6 @@
 Radial Bubble Tree
 ==================
-
+See how to use this lib via run /demoOnRails
 This is a version base on https://github.com/okfn/bubbletree and implement below features:
 
 1. Bug fix

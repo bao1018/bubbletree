@@ -107,7 +107,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
 		me.traverse(root, 0);
 		me.treeRoot = root;
 	};
-
+    //remove the children if the children number exceed the max node
 	me.preprocessData = function(root) {
 		var me = this, maxNodes = me.config.maxNodesPerLevel;
 		if (maxNodes) {
@@ -420,6 +420,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
 	 * each view is defined by the selected node (which is displayed
 	 */
 	me.changeView = function(token) {
+		
 		var me = this,
 			paper = me.paper,
 			maxRad = Math.min(me.width, me.height) * 0.35,
@@ -436,7 +437,23 @@ var BubbleTree = function(config, onHover, onUnHover) {
 			bubble, tr, i, twopi = Math.PI * 2,
 			getBubble = me.getBubble.bind(me), getRing = me.getRing.bind(me),
 			unify = me.unifyAngle;
-
+			/*jeremy*/
+			if(config.injectionPreMethod)
+			config.injectionPreMethod(node);
+			
+            if(root != node && config.dataProvider && node.children && node.children.length ==0) {
+            //dynamiclly update the children
+            
+            node['children'] = config.dataProvider(node);
+            //re-calculate node data
+            me.initData(root);
+            //re-traverse
+            var currBubble = me.getBubble(node);   
+            me.traverseBubbles(currBubble);
+            // me.initTween();
+            }
+            /*jeremy*/
+            
 		if (node !== null) {
 
 			// what do you we have to do here?
@@ -527,12 +544,25 @@ var BubbleTree = function(config, onHover, onUnHover) {
 				//
 				var hw = me.width * 0.5;
 
-				rad2 = 0 - Math.max(
-					//hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
-					hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85, node.right.amount * 0.85))),
-					tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
-				) + hw;
-
+				// rad2 = 0 - Math.max(
+					// //hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
+					// hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85, node.right.amount * 0.85))),
+					// tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
+				// ) + hw;
+               if (node.right==undefined) {
+                    rad2 = 0 - Math.max(
+                        //hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
+                        hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85))),
+                        tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
+                    ) + hw;
+                }
+                else {
+                    rad2 = 0 - Math.max(
+                        //hw *0.8 - tgtScale * (a2rad(node.parent.amount)+a2rad(node.amount)), // maximum visible part
+                        hw * 0.8 - tgtScale * (a2rad(node.parent.amount) + a2rad(Math.max(node.amount*1.15 + node.maxChildAmount*1.15, node.left.amount * 0.85, node.right.amount * 0.85))),
+                        tgtScale*a2rad(node.parent.amount)*-1 + hw*0.15 // minimum visible part
+                    ) + hw;
+                }
 				//vis4.log('rad (parent) = '+rad2,'   rad (center) = ',rad1);
 
 				if (node.left && node.right) {
@@ -624,6 +654,7 @@ var BubbleTree = function(config, onHover, onUnHover) {
 		} else {
 			utils.log('node '+token+' not found');
 		}
+		
 		// step1:
 
 		// step2:
@@ -735,11 +766,13 @@ var BubbleTree = function(config, onHover, onUnHover) {
 	/*
 	 * this function initiate the action which follows the url change
 	 */
-	me.changeUrl = function() {
+	me.changeUrl = function(visitRoot) {
 		var me = this, parts = me.freshUrl.split('/'), token = parts[parts.length-1], url;
 
 		// var urlParts = me.freshUrl.split('/~/');
-		if (me.freshUrl === "") me.navigateTo(me.treeRoot);
+		if (me.freshUrl === "" || visitRoot) me.navigateTo(me.treeRoot);
+		if(visitRoot)
+		return;
 
 		if (me.nodesByUrlToken.hasOwnProperty(token)) {
 			url = me.getUrlForNode(me.nodesByUrlToken[token]);
@@ -1593,9 +1626,29 @@ BubbleTree.Bubbles.Donut = function(node, bubblechart, origin, radius, angle, co
 	 *
 	 */
 	me.onclick = function(e) {
-		var me = this;
-
-		me.bc.navigateTo(me.node);
+		if(BubbleTree.fireing)
+		return;
+		BubbleTree.clickCount++;
+		
+		if(BubbleTree.clickCount == 1){
+			BubbleTree.current = this;
+			BubbleTree.timer = setTimeout(function(){
+				BubbleTree.fireing = true;
+				if(BubbleTree.clickCount == 1){
+					var me = BubbleTree.current.bc;
+					BubbleTree.firingFunction = me.config.singleClick || BubbleTree.singleClick;
+				}else{
+					window.clearTimeout(BubbleTree.timer);
+					var me = BubbleTree.current.bc;
+					BubbleTree.firingFunction = me.config.doubleClick || BubbleTree.doubleClick;
+				}
+				
+			BubbleTree.clickCount = 0;
+			BubbleTree.firingFunction(e);
+			//always revert to single click firing function
+			BubbleTree.fireing = false;
+		  }, 200);
+		}
 		
 	};
 		
@@ -1650,9 +1703,11 @@ BubbleTree.Bubbles.Donut = function(node, bubblechart, origin, radius, angle, co
 
 		//me.label.attr({ x: me.pos.x, y: me.pos.y, 'font-size': Math.max(4, me.bubbleRad * me.bc.bubbleScale * 0.25) });
 		if (!showLabel) {
+			
 			me.label.hide();
 			me.label2.show();
 		} else {
+			
 			me.label.show();
 			if (r < 40) {
 				me.label.find('.desc').hide();
@@ -1667,9 +1722,10 @@ BubbleTree.Bubbles.Donut = function(node, bubblechart, origin, radius, angle, co
 		me.label.css({ width: 2*r*0.9+'px', opacity: me.alpha });
 		me.label.css({ left: (me.pos.x-r*0.9)+'px', top: (me.pos.y-me.label.height()*0.53)+'px' });
 	
-		var w = Math.max(80, 3*r);
-		me.label2.css({ width: w+'px', opacity: me.alpha });
-		me.label2.css({ left: (x - w*0.5)+'px', top: (y + r)+'px' });
+		var w = Math.max(100, 3*r);
+		var tw = Math.min(w, me.label2[0].innerText.length*8)
+		me.label2.css({ width: tw+'px', opacity: me.alpha });
+		me.label2.css({ left: (me.pos.x+r-tw*0.1)+'px', top: (me.pos.y - w*0.15)+'px'});
 	
 	};
 	
@@ -1821,7 +1877,7 @@ BubbleTree.Bubbles.Icon = function(node, bubblechart, origin, radius, angle, col
 	me.pos = ns.Vector(0,0);
 	me.bubbleRad = utils.amount2rad(this.node.amount);
 	
-	me.iconLoaded = false;
+	me.Loaded = false;
 	
 	/*
 	 * child rotation is just used from outside to layout possible child bubbles
@@ -2017,7 +2073,9 @@ BubbleTree.Bubbles.Icon = function(node, bubblechart, origin, radius, angle, col
 			x = me.pos.x, y = me.pos.y, 
 			showIcon = me.hasIcon && r > 15,
 			showLabel = me.hasIcon ? r > 40 : r > 20,
+			
 			i, path, scale, transform, ly;
+			
 		
 		if (!me.visible) return;
 		
@@ -2055,6 +2113,7 @@ BubbleTree.Bubbles.Icon = function(node, bubblechart, origin, radius, angle, col
 		
 		
 		//if (me.icon) me.icon.translate(me.pos.x - ox, me.pos.y - oy);
+	
 		if (me.hasIcon) {
 			if (showIcon) {
 				scale = (r - (showLabel ? me.label.height()*0.5 : 0)) / 60;
@@ -2132,3 +2191,21 @@ BubbleTree.Bubbles.Icon = function(node, bubblechart, origin, radius, angle, col
 	
 	me.init();
 };
+
+BubbleTree["timer"] = null;
+BubbleTree["current"];
+BubbleTree["clickCount"] = 0;
+BubbleTree["fireing"] = false;
+BubbleTree["singleClick"] = function(e) {
+	
+	var me = BubbleTree.current;
+	console.log(me);
+	me.bc.navigateTo(me.node);
+};
+BubbleTree["doubleClick"] = function(e) {
+	var me = BubbleTree.current;
+	me.bc.navigateTo(me.node);
+};
+BubbleTree["firingFunction"] = BubbleTree["singleClick"]; 
+
+
